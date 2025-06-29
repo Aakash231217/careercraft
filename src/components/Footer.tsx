@@ -82,7 +82,7 @@ const Footer = () => {
                 <FileText className="h-10 w-10 text-white mr-3" />
               </motion.div>
               <span className="text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
-                CareerCraft
+                Adaptius
               </span>
             </motion.div>
             <motion.p
@@ -173,9 +173,9 @@ const Footer = () => {
             <h3 className="font-bold text-xl mb-6 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Contact</h3>
             <div className="space-y-4">
               {[
-                { icon: Mail, text: 'support@careercraft.com' },
-                { icon: Phone, text: '+1 (555) 123-4567' },
-                { icon: MapPin, text: 'San Francisco, CA' }
+                { icon: Mail, text: 'shalini@adaptius.in' },
+                { icon: Phone, text: '+91- 7985113984' },
+                { icon: MapPin, text: 'Bengaluru, Karnataka' }
               ].map((contact, index) => (
                 <motion.div
                   key={index}
@@ -210,7 +210,7 @@ const Footer = () => {
             variants={itemVariants}
             className="text-gray-400 text-lg mb-4 md:mb-0"
           >
-            © 2024 CareerCraft. All rights reserved.
+            © 2025 Adaptius. All rights reserved.
           </motion.div>
           <motion.div
             variants={containerVariants}

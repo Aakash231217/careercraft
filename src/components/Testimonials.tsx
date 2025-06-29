@@ -7,27 +7,27 @@ import { motion, Variants } from 'framer-motion';
 const Testimonials = () => {
   const testimonials = [
     {
-      name: "Sarah Johnson",
+      name: "Anika",
       role: "Software Engineer",
       company: "Tech Corp",
-      content: "CareerCraft helped me land my dream job! The ATS optimization was incredible.",
-      rating: 5,
+      content: "Adaptius helped me land my dream job! The ATS optimization was incredible.",
+      rating: 4.5,
       avatar: "SJ"
     },
     {
-      name: "Michael Chen",
-      role: "Product Manager",
-      company: "StartupXYZ",
+      name: "Devraj",
+      role: "Product Analyst",
+      company: "Groww",
       content: "The resume analyzer gave me insights I never knew I needed. Highly recommend!",
       rating: 5,
       avatar: "MC"
     },
     {
-      name: "Emily Rodriguez",
+      name: "Pawan Raj",
       role: "Data Scientist",
-      company: "DataFlow Inc",
+      company: "DataBricks",
       content: "Professional templates and easy customization. Got 3 interviews in a week!",
-      rating: 5,
+      rating: 4,
       avatar: "ER"
     }
   ];
@@ -67,7 +67,7 @@ const Testimonials = () => {
             What Our Users Say
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Join thousands of professionals who've transformed their careers with CareerCraft
+            Join thousands of professionals who've transformed their careers with 
           </p>
         </motion.div>
 

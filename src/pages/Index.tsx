@@ -291,7 +291,7 @@ const Index = () => {
               className="mb-8"
             >
               <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6 leading-tight">
-                CareerCraft Pro
+                Adaptius Pro
               </h1>
             </motion.div>
             
