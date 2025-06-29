@@ -11,7 +11,7 @@ const Testimonials = () => {
       role: "Software Engineer",
       company: "Tech Corp",
       content: "Adaptius helped me land my dream job! The ATS optimization was incredible.",
-      rating: 4.5,
+      rating: 5,
       avatar: "AN"
     },
     {
@@ -20,7 +20,7 @@ const Testimonials = () => {
       company: "Groww",
       content: "The resume analyzer gave me insights I never knew I needed. Highly recommend!",
       rating: 5,
-      avatar: "D"
+      avatar: "DE"
     },
     {
       name: "Pawan Raj",
