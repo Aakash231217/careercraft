@@ -1,4 +1,5 @@
-const OpenAI = require('openai').default || require('openai');
+// Import OpenAI for Netlify Functions
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
   apiKey: process.env.VITE_OPENAI_API_KEY
