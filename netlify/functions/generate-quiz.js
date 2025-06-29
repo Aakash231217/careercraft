@@ -1,10 +1,13 @@
-import OpenAI from 'openai';
+const { OpenAI } = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.VITE_OPENAI_API_KEY
 });
 
-export async function handler(event, context) {
+exports.handler = async (event, context) => {
+  console.log('Function called with event:', event.httpMethod);
+  console.log('Environment check - OpenAI key present:', !!process.env.VITE_OPENAI_API_KEY);
+  
   // Handle CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -25,6 +28,14 @@ export async function handler(event, context) {
   }
 
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key not found in environment');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'OpenAI API key not configured' })
+      };
+    }
     const { topic, numQuestions } = JSON.parse(event.body);
 
     if (!topic || !numQuestions) {
@@ -66,7 +77,7 @@ Rules:
 Generate ${numQuestions} questions now:`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4.1-2025-04-14",
       messages: [
         {
           role: "system", 

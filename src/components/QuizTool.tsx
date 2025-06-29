@@ -77,7 +77,8 @@ const QuizTool: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await fetch('/.netlify/functions/generate-quiz', {
+      // Try test function first to debug
+      const response = await fetch('/.netlify/functions/test-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: topic.trim(), numQuestions })
