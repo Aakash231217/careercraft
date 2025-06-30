@@ -4,7 +4,6 @@
 
 [functions]
   directory = "netlify/functions"
-  timeout = 10 # Maximum timeout for free tier
 
 [[redirects]]
   from = "/*"
