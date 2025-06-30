@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Download, Eye, Wand2, Copy, CheckCircle } from 'lucide-react';
 import DownloadModal from '@/components/DownloadModal';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CoverLetterData {
   recipientName: string;
@@ -17,6 +18,7 @@ interface CoverLetterData {
   yourName: string;
   yourEmail: string;
   yourPhone: string;
+  yourAddress: string;
   jobDescription: string;
   tone: string;
   experience: string;
@@ -31,6 +33,7 @@ const CoverLetterBuilder = () => {
     yourName: '',
     yourEmail: '',
     yourPhone: '',
+    yourAddress: '',
     jobDescription: '',
     tone: 'professional',
     experience: '',
@@ -57,35 +60,61 @@ const CoverLetterBuilder = () => {
   };
 
   const generateCoverLetter = async () => {
+    // Validate required fields
+    if (!formData.companyName.trim() || !formData.position.trim() || !formData.yourName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in at least Company Name, Position, and Your Name to generate a cover letter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     
-    // Simulate AI generation (in real app, this would call an AI API)
-    setTimeout(() => {
-      const letter = `Dear ${formData.recipientName || 'Hiring Manager'},
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
+        body: {
+          recipientName: formData.recipientName,
+          companyName: formData.companyName,
+          position: formData.position,
+          yourName: formData.yourName,
+          yourEmail: formData.yourEmail,
+          yourPhone: formData.yourPhone,
+          yourAddress: formData.yourAddress,
+          jobDescription: formData.jobDescription,
+          tone: formData.tone,
+          experience: formData.experience,
+          motivation: formData.motivation
+        }
+      });
 
-I am writing to express my strong interest in the ${formData.position || 'position'} role at ${formData.companyName || 'your company'}. With my background in ${formData.experience || 'relevant experience'}, I am excited about the opportunity to contribute to your team's success.
+      if (error) {
+        throw new Error(error.message || 'Failed to generate cover letter');
+      }
 
-${formData.motivation || 'I am particularly drawn to this role because of the opportunity to make a meaningful impact and grow professionally.'} My experience has equipped me with the skills necessary to excel in this position, including strong problem-solving abilities, excellent communication skills, and a passion for continuous learning.
+      if (!data?.coverLetter) {
+        throw new Error('No cover letter content received');
+      }
 
-In my previous roles, I have successfully:
-• Developed and implemented innovative solutions that improved efficiency
-• Collaborated effectively with cross-functional teams to achieve project goals
-• Demonstrated strong analytical skills and attention to detail
-• Maintained high standards of quality and professionalism
-
-I am particularly excited about ${formData.companyName || 'your company'}'s mission and values, which align perfectly with my own professional goals. I believe my skills and enthusiasm make me an ideal candidate for this position.
-
-I would welcome the opportunity to discuss how my background and passion can contribute to ${formData.companyName || 'your company'}'s continued success. Thank you for considering my application. I look forward to hearing from you soon.
-
-Sincerely,
-${formData.yourName || 'Your Name'}
-${formData.yourEmail || 'your.email@example.com'}
-${formData.yourPhone || '(555) 123-4567'}`;
-
-      setGeneratedLetter(letter);
+      setGeneratedLetter(data.coverLetter);
       setActiveTab('preview');
+      
+      toast({
+        title: "Cover Letter Generated!",
+        description: "Your personalized cover letter has been created using AI.",
+      });
+
+    } catch (error) {
+      console.error('Error generating cover letter:', error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate cover letter. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyToClipboard = async () => {
@@ -207,6 +236,15 @@ ${formData.yourPhone || '(555) 123-4567'}`;
                   value={formData.yourPhone}
                   onChange={(e) => updateField('yourPhone', e.target.value)}
                   placeholder="(555) 123-4567"
+                />
+              </div>
+              <div>
+                <Label htmlFor="your-address">Your Address (Optional)</Label>
+                <Input
+                  id="your-address"
+                  value={formData.yourAddress}
+                  onChange={(e) => updateField('yourAddress', e.target.value)}
+                  placeholder="123 Main St, City, State 12345"
                 />
               </div>
             </CardContent>

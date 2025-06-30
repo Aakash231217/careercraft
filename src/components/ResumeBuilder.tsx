@@ -285,7 +285,7 @@ const ResumeBuilder = () => {
     }));
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     try {
       if (!resumeContentRef.current) {
         throw new Error('Resume content not found');
@@ -299,42 +299,41 @@ const ResumeBuilder = () => {
       // Get the resume element with all its styling
       const element = resumeContentRef.current;
       
-      // Configure jsPDF
+      // Create canvas with high quality settings for crisp PDF
+      const canvas = await html2canvas(element, {
+        scale: 3, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+      
+      // Calculate PDF dimensions
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
+        unit: 'mm',
         format: 'a4',
       });
       
-      // Set the scale to fit the content nicely on the PDF
-      const scale = 0.75;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      // Set page dimensions
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      // Add image to PDF with proper scaling
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       
-      // Create a canvas from the resume element
-      html2canvas(element, {
-        scale: scale,
-        useCORS: true,
-        logging: false,
-        allowTaint: true
-      }).then(canvas => {
-        // Calculate dimensions for centering
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = pageWidth;
-        const imgHeight = canvas.height * pageWidth / canvas.width;
-        
-        // Add image to PDF, centered
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        
-        // Save the PDF
-        pdf.save(`${resumeData.fullName ? resumeData.fullName.replace(/\s+/g, '_') : 'resume'}_${Date.now()}.pdf`);
-        
-        toast({
-          title: 'Download started',
-          description: 'Your resume is being downloaded as a PDF file.',
-        });
+      // Save the PDF
+      pdf.save(`${resumeData.fullName ? resumeData.fullName.replace(/\s+/g, '_') : 'resume'}_${Date.now()}.pdf`);
+      
+      toast({
+        title: 'Download completed',
+        description: 'Your high-quality resume has been downloaded successfully!',
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -344,7 +343,7 @@ const ResumeBuilder = () => {
         variant: 'destructive',
       });
     }
-};
+  };
 
   if (showPreview) {
     return (
@@ -391,11 +390,11 @@ const ResumeBuilder = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-2 border-b border-gray-300 pb-1">
                   Skills
                 </h2>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {resumeData.skills.filter(skill => skill.trim()).map((skill, index) => (
                     <span 
                       key={index} 
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                      className="font-bold text-gray-800 text-sm"
                     >
                       {skill}
                     </span>
