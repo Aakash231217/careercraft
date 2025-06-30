@@ -2,7 +2,7 @@
 const OpenAI = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.VITE_OPENAI_API_KEY
 });
 
 exports.handler = async (event, context) => {
@@ -42,7 +42,19 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'OpenAI API key not configured' })
       };
     }
-    const { topic, numQuestions, batch = 1, totalQuestions = numQuestions } = JSON.parse(event.body);
+    let requestBody;
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch (parseError) {
+      console.error('Failed to parse request body:', event.body);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+      };
+    }
+    
+    const { topic, numQuestions, batch = 1, totalQuestions = numQuestions } = requestBody;
 
     if (!topic || !numQuestions) {
       return {
@@ -90,22 +102,44 @@ Rules:
 
 Generate ${limitedQuestions} questions now:`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Faster model to avoid timeouts
-      messages: [
-        {
-          role: "system", 
-          content: "You are a quiz generator. Return only valid JSON arrays with no markdown formatting or extra text. Never add ```json``` or any other formatting around the JSON."
-        },
-        {
-          role: "user", 
-          content: prompt
-        }
-      ],
-      max_tokens: Math.min(limitedQuestions * 200, 2000), // Dynamic token limit based on question count
-      temperature: 0.3,
-      timeout: 8000 // 8 second timeout to stay within Netlify limits
-    });
+    let completion;
+    try {
+      console.log('Making OpenAI API call with model: gpt-4o');
+      completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system", 
+            content: "You are a quiz generator. Return only valid JSON arrays with no markdown formatting or extra text. Never add ```json``` or any other formatting around the JSON."
+          },
+          {
+            role: "user", 
+            content: prompt
+          }
+        ],
+        max_tokens: Math.min(limitedQuestions * 200, 2000),
+        temperature: 0.3
+      });
+      console.log('OpenAI API call successful');
+    } catch (apiError) {
+      console.error('OpenAI API Error:', {
+        message: apiError.message,
+        status: apiError.status,
+        code: apiError.code,
+        type: apiError.type
+      });
+      
+      // Return a more specific error
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'OpenAI API request failed',
+          details: apiError.message,
+          apiStatus: apiError.status || 'unknown'
+        })
+      };
+    }
 
     let response = completion.choices[0].message.content.trim();
     console.log('Raw OpenAI response:', response.substring(0, 200) + '...');
@@ -180,13 +214,21 @@ Generate ${limitedQuestions} questions now:`;
     };
 
   } catch (error) {
-    console.error('Error generating quiz questions:', error);
+    console.error('Error generating quiz questions:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      type: typeof error
+    });
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Failed to generate quiz questions',
-        details: error.message 
+        details: error.message,
+        errorType: error.name || 'Unknown',
+        timestamp: new Date().toISOString()
       })
     };
   }
