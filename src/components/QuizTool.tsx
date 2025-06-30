@@ -81,7 +81,7 @@ const QuizTool: React.FC = () => {
       const isDevelopment = import.meta.env.DEV;
       const apiUrl = isDevelopment 
         ? 'http://localhost:3001/api/generate-quiz' // Local development
-        : '/.netlify/functions/test-simple'; // Test function (production)
+        : '/.netlify/functions/generate-quiz'; // Production Netlify function
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
