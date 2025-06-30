@@ -2,12 +2,17 @@
 const OpenAI = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.VITE_OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 exports.handler = async (event, context) => {
-  console.log('Function called with event:', event.httpMethod);
-  console.log('Environment check - OpenAI key present:', !!process.env.VITE_OPENAI_API_KEY);
+  console.log('Simple test function called');
+  console.log('HTTP Method:', event.httpMethod);
+  console.log('Environment variables check:', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasViteOpenAIKey: !!process.env.VITE_OPENAI_API_KEY,
+    nodeVersion: process.version
+  });
   
   // Handle CORS
   const headers = {
