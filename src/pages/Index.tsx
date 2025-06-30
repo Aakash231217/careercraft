@@ -35,7 +35,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ColdEmailOutreach } from "@/components/outreach/ColdEmailOutreach";
 import QuizTool from "@/components/QuizTool";
 
-type ActiveTool = 'resume-builder' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | null;
+type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | null;
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState<ActiveTool>(null);
@@ -105,7 +105,6 @@ const Index = () => {
       switch (activeTool) {
         case 'resume-builder':
           return <ResumeBuilder />;
-        
         case 'cover-letter':
           return <CoverLetterBuilder />;
         case 'salary-guide':
@@ -170,14 +169,6 @@ const Index = () => {
       icon: FileText,
       gradient: "from-blue-500 via-purple-500 to-pink-500",
       hoverGradient: "hover:from-blue-600 hover:via-purple-600 hover:to-pink-600"
-    },
-    {
-      id: 'resume-analyzer' as ActiveTool,
-      title: "Resume Analyzer",
-      description: "Get AI feedback on your existing resume",
-      icon: TrendingUp,
-      gradient: "from-green-500 via-emerald-500 to-teal-500",
-      hoverGradient: "hover:from-green-600 hover:via-emerald-600 hover:to-teal-600"
     },
     {
       id: 'cover-letter' as ActiveTool,
