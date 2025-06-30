@@ -23,7 +23,6 @@ import CoverLetterBuilder from "@/components/CoverLetterBuilder";
 import SalaryGuide from "@/components/SalaryGuide";
 import RoadmapBuilder from "@/components/RoadmapBuilder";
 import ProjectFeedback from "@/components/ProjectFeedback";
-import PortfolioBuilder from "@/components/PortfolioBuilder";
 import MockInterview from "@/components/MockInterviewer"; // Fix the import name to match the exported component name
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
@@ -117,8 +116,7 @@ const Index = () => {
           return <RoadmapBuilder />;
         case 'project-feedback':
           return <ProjectFeedback />;
-        case 'portfolio-builder':
-          return <PortfolioBuilder />;
+       
         case 'mock-interviewer':
           return <MockInterview />; // Fix the import name to match the exported component name
         case 'cold-email-outreach':
