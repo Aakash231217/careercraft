@@ -55,6 +55,12 @@ const QuizTool: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  
+  // Progressive loading states
+  const [totalExpectedQuestions, setTotalExpectedQuestions] = useState(10);
+  const [currentBatch, setCurrentBatch] = useState(1);
+  const [isLoadingNextBatch, setIsLoadingNextBatch] = useState(false);
+  const [hasMoreBatches, setHasMoreBatches] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -77,15 +83,26 @@ const QuizTool: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Test simple function first, then use proper one
+      // Reset progressive loading states
+      setCurrentBatch(1);
+      setTotalExpectedQuestions(numQuestions);
+      
+      const firstBatchSize = Math.min(numQuestions, 10);
+      
       const isDevelopment = import.meta.env.DEV;
       const apiUrl = isDevelopment 
         ? 'http://localhost:3001/api/generate-quiz' // Local development
         : '/.netlify/functions/generate-quiz'; // Production Netlify function
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), numQuestions })
+        body: JSON.stringify({ 
+          topic: topic.trim(), 
+          numQuestions: firstBatchSize,
+          batch: 1,
+          totalQuestions: numQuestions
+        })
       });
 
       if (!response.ok) {
@@ -103,11 +120,14 @@ const QuizTool: React.FC = () => {
 
       if (data.success && data.questions && data.questions.length > 0) {
         setQuestions(data.questions);
+        setHasMoreBatches(data.hasMoreBatches || false);
         setTimeLeft(numQuestions * 60); // 1 minute per question
         setStep('quiz');
         setCurrentQuestion(0);
         setUserAnswers({});
         setSelectedAnswers([]);
+        
+        console.log(`Loaded batch 1: ${data.questions.length} questions. Has more batches: ${data.hasMoreBatches}`);
       } else {
         throw new Error(data.error || 'No questions were generated');
       }
@@ -116,6 +136,61 @@ const QuizTool: React.FC = () => {
       alert('Error generating quiz: ' + error.message + '. Please try again with a different topic.');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const loadNextBatch = async () => {
+    if (!hasMoreBatches || isLoadingNextBatch) return;
+    
+    setIsLoadingNextBatch(true);
+    const nextBatch = currentBatch + 1;
+    
+    try {
+      const isDevelopment = import.meta.env.DEV;
+      const apiUrl = isDevelopment 
+        ? 'http://localhost:3001/api/generate-quiz' // Local development
+        : '/.netlify/functions/generate-quiz'; // Production Netlify function
+      
+      const questionsNeeded = Math.min(totalExpectedQuestions - questions.length, 10);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          topic: topic.trim(), 
+          numQuestions: questionsNeeded,
+          batch: nextBatch,
+          totalQuestions: totalExpectedQuestions
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse response:', text);
+        throw new Error('Invalid response format from server');
+      }
+
+      if (data.success && data.questions && data.questions.length > 0) {
+        setQuestions(prev => [...prev, ...data.questions]);
+        setCurrentBatch(nextBatch);
+        setHasMoreBatches(data.hasMoreBatches || false);
+        
+        console.log(`Loaded batch ${nextBatch}: ${data.questions.length} more questions. Total now: ${questions.length + data.questions.length}`);
+      } else {
+        console.error('Failed to load next batch:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading next batch:', error);
+      // Don't show alert for batch loading errors, just log them
+    } finally {
+      setIsLoadingNextBatch(false);
     }
   };
 
@@ -133,13 +208,31 @@ const QuizTool: React.FC = () => {
   };
 
   const nextQuestion = () => {
-    setUserAnswers(prev => ({ ...prev, [currentQuestion]: [...selectedAnswers] }));
+    setUserAnswers(prev => ({ ...prev, [currentQuestion]: selectedAnswers }));
     setSelectedAnswers([]);
+    
+    // Check if we need to load next batch (when user is at question 8 or 18, etc.)
+    const questionPosition = currentQuestion + 1; // 1-based position
+    const shouldLoadNext = hasMoreBatches && !isLoadingNextBatch && 
+                          ((questionPosition % 10 === 8) || (questionPosition % 10 === 9));
+    
+    if (shouldLoadNext) {
+      console.log(`Triggering next batch load at question ${questionPosition}`);
+      loadNextBatch();
+    }
     
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
-    } else {
+    } else if (currentQuestion >= totalExpectedQuestions - 1) {
+      // We've reached the total expected questions
       handleFinishQuiz();
+    } else if (!hasMoreBatches) {
+      // No more batches available, finish with what we have
+      handleFinishQuiz();
+    } else {
+      // Wait for more questions to load, but don't advance yet
+      // This case should be rare due to proactive loading
+      console.log('Waiting for more questions to load...');
     }
   };
 
@@ -153,7 +246,7 @@ const QuizTool: React.FC = () => {
     const categoryScores: { [key: string]: { correct: number; total: number } } = {};
     const difficultyBreakdown: { [key: string]: { correct: number; total: number } } = {};
     const questionsReview: any[] = [];
-    const totalTimeSpent = (numQuestions * 60) - timeLeft;
+    const totalTimeSpent = (totalExpectedQuestions * 60) - timeLeft;
     
     questions.forEach((question, index) => {
       const userAnswer = answers[index] || [];
@@ -249,7 +342,7 @@ const QuizTool: React.FC = () => {
 
     setQuizResult({
       score: scorePercentage,
-      totalQuestions: questions.length,
+      totalQuestions: questions.length, // Actual questions answered
       timeSpent: totalTimeSpent,
       weakAreas,
       strongAreas,
@@ -276,12 +369,18 @@ const QuizTool: React.FC = () => {
 
   const resetQuiz = () => {
     setStep('setup');
-    setTopic('');
-    setCurrentQuestion(0);
     setQuestions([]);
-    setUserAnswers({});
+    setCurrentQuestion(0);
     setSelectedAnswers([]);
+    setUserAnswers({});
+    setTimeLeft(0);
     setQuizResult(null);
+    
+    // Reset progressive loading states
+    setCurrentBatch(1);
+    setTotalExpectedQuestions(10);
+    setIsLoadingNextBatch(false);
+    setHasMoreBatches(false);
   };
 
   if (step === 'setup') {
@@ -337,17 +436,29 @@ const QuizTool: React.FC = () => {
 
   if (step === 'quiz') {
     const question = questions[currentQuestion];
-    const progress = ((currentQuestion + 1) / questions.length) * 100;
+    const progress = ((currentQuestion + 1) / totalExpectedQuestions) * 100;
+    const questionsLoaded = questions.length;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-4">
-              <span className="text-lg font-semibold">Question {currentQuestion + 1} of {questions.length}</span>
+              <span className="text-lg font-semibold">
+                Question {currentQuestion + 1} of {totalExpectedQuestions}
+                {questionsLoaded < totalExpectedQuestions && (
+                  <span className="text-sm text-gray-500 ml-2">({questionsLoaded} loaded)</span>
+                )}
+              </span>
               <div className="w-48 bg-gray-200 rounded-full h-2">
                 <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
               </div>
+              {isLoadingNextBatch && (
+                <div className="flex items-center text-sm text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Loading more questions...
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-2 text-red-600 font-bold">
               <Clock size={20} />
@@ -384,7 +495,7 @@ const QuizTool: React.FC = () => {
                   disabled={selectedAnswers.length === 0}
                   className="bg-gradient-to-r from-green-600 to-blue-600"
                 >
-                  {currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+                  {currentQuestion >= totalExpectedQuestions - 1 ? 'Finish Quiz' : 'Next Question'}
                 </Button>
               </div>
             </CardContent>
