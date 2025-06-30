@@ -10,32 +10,38 @@ const PORT = process.env.PORT || 3001;
 
 // Initialize OpenAI
 const openai = new OpenAI({
-  apiKey: process.env.VITE_OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Quiz generation endpoint
+// Quiz generation endpoint with progressive loading
 app.post('/api/generate-quiz', async (req, res) => {
   try {
-    const { topic, numQuestions } = req.body;
+    const { topic, numQuestions, batch = 1, totalQuestions = numQuestions } = req.body;
 
     if (!topic || !numQuestions) {
       return res.status(400).json({ error: 'Topic and number of questions are required' });
     }
 
-    console.log('Generating quiz for topic:', topic, 'with', numQuestions, 'questions');
+    // For progressive loading, generate max 10 questions per batch to avoid timeout
+    const limitedQuestions = Math.min(numQuestions, 10);
+    console.log('Generating quiz batch', batch, 'for topic:', topic, 'with', limitedQuestions, 'questions (limited from', numQuestions, ') - Total target:', totalQuestions);
 
-    const prompt = `Generate exactly ${numQuestions} multiple choice questions about "${topic}".
+    // Calculate starting ID based on batch number
+    const startingId = (batch - 1) * 10 + 1;
+    
+    const prompt = `Generate exactly ${limitedQuestions} multiple choice questions about "${topic}".
+This is batch ${batch} of a larger quiz (questions ${startingId}-${startingId + limitedQuestions - 1}).
 
 RETURN ONLY VALID JSON - NO OTHER TEXT OR FORMATTING.
 
 Format:
 [
   {
-    "id": 1,
+    "id": ${startingId},
     "question": "What is the time complexity of binary search?",
     "options": ["O(n)", "O(log n)", "O(n log n)", "O(n²)"],
     "correctAnswers": [1],
@@ -53,11 +59,13 @@ Rules:
 - difficulty: "easy", "medium", or "hard"
 - Keep explanations under 100 characters
 - Make questions practical and relevant
+- Start question IDs from ${startingId}
+- Ensure variety in difficulty and question types for batch ${batch}
 
-Generate ${numQuestions} questions now:`;
+Generate ${limitedQuestions} questions now:`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-2025-04-14",
+      model: "gpt-4o",
       messages: [
         {
           role: "system", 
@@ -118,9 +126,9 @@ Generate ${numQuestions} questions now:`;
       throw new Error('Invalid question format received');
     }
 
-    // Validate each question has required fields
+    // Validate each question has required fields and correct IDs
     const validatedQuestions = questions.map((q, index) => ({
-      id: q.id || index + 1,
+      id: q.id || (startingId + index),
       question: q.question || '',
       options: Array.isArray(q.options) ? q.options : [],
       correctAnswers: Array.isArray(q.correctAnswers) ? q.correctAnswers : [0],
@@ -134,7 +142,10 @@ Generate ${numQuestions} questions now:`;
       success: true, 
       questions: validatedQuestions,
       topic: topic,
-      totalQuestions: validatedQuestions.length
+      batch: batch,
+      questionsInBatch: validatedQuestions.length,
+      totalQuestions: totalQuestions,
+      hasMoreBatches: (batch * 10) < totalQuestions
     });
 
   } catch (error) {

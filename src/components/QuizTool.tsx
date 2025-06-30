@@ -92,7 +92,7 @@ const QuizTool: React.FC = () => {
       const isDevelopment = import.meta.env.DEV;
       const apiUrl = isDevelopment 
         ? 'http://localhost:3001/api/generate-quiz' // Local development
-        : '/.netlify/functions/generate-quiz'; // Production Netlify function
+        : 'https://backend-83wa.onrender.com/api/generate-quiz'; // Production Render backend
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -149,7 +149,7 @@ const QuizTool: React.FC = () => {
       const isDevelopment = import.meta.env.DEV;
       const apiUrl = isDevelopment 
         ? 'http://localhost:3001/api/generate-quiz' // Local development
-        : '/.netlify/functions/generate-quiz'; // Production Netlify function
+        : 'https://backend-83wa.onrender.com/api/generate-quiz'; // Production Render backend
       
       const questionsNeeded = Math.min(totalExpectedQuestions - questions.length, 10);
       
