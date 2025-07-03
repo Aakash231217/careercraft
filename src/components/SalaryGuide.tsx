@@ -10,6 +10,7 @@ import { DollarSign, TrendingUp, Lightbulb, MapPin, Briefcase, Target, IndianRup
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface SalaryData {
   position: string;
@@ -28,6 +29,7 @@ interface SalaryRange {
 }
 
 const SalaryGuide = () => {
+  const { checkAndUseFeature } = useSubscription();
   const [salaryResult, setSalaryResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -122,6 +124,10 @@ const SalaryGuide = () => {
   };
 
   const onSubmit = async (data: SalaryData) => {
+    // Check subscription limit before fetching salary data
+    const canUse = await checkAndUseFeature('salaryGuide');
+    if (!canUse) return;
+    
     setIsLoading(true);
     setError('');
     

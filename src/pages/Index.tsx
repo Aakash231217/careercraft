@@ -14,7 +14,8 @@ import {
   Mic,
   Linkedin,
   Mail,
-  Brain
+  Brain,
+  CreditCard
 } from "lucide-react";
 
 import ResumeBuilder from "@/components/ResumeBuilder";
@@ -34,8 +35,9 @@ import { User } from "@supabase/supabase-js";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ColdEmailOutreach } from "@/components/outreach/ColdEmailOutreach";
 import QuizTool from "@/components/QuizTool";
+import Billing from "@/components/Billing";
 
-type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | null;
+type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'billing' | null;
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState<ActiveTool>(null);
@@ -120,6 +122,8 @@ const Index = () => {
           return <ColdEmailOutreach />;
         case 'quiz-tool':
           return <QuizTool />;
+        case 'billing':
+          return <Billing />;
         default:
           return null;
       }
@@ -219,6 +223,14 @@ const Index = () => {
       gradient: "from-pink-500 via-rose-500 to-red-500",
       hoverGradient: "hover:from-pink-600 hover:via-rose-600 hover:to-red-600"
     },
+    {
+      id: 'billing' as ActiveTool,
+      title: "Billing & Plans",
+      description: "Manage your subscription and view usage limits",
+      icon: CreditCard,
+      gradient: "from-amber-500 via-orange-500 to-red-500",
+      hoverGradient: "hover:from-amber-600 hover:via-orange-600 hover:to-red-600"
+    },
    
   ];
 
@@ -276,7 +288,7 @@ const Index = () => {
         </div>
 
         {/* Hero Section */}
-        <section className="py-20 px-4 text-center relative z-10">
+        <section className="pt-12 pb-8 px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -329,8 +341,9 @@ const Index = () => {
         </section>
 
         {/* Tools Grid */}
-        <section className="py-16 px-4 relative z-10">
+        <section className="pt-8 pb-16 px-4 relative z-10">
           <div className="max-w-7xl mx-auto">
+
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Square, Mic, MicOff, User, Briefcase, Clock, Star, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
 
 // UI Components (reusing from Index.tsx for consistency)
 const Card = ({ children, className = "" }) => (
@@ -387,6 +388,8 @@ class OpenAIService {
 }
 
 const MockInterview = () => {
+  const { checkAndUseFeature } = useSubscription();
+  
   // State management
   const [currentView, setCurrentView] = useState<'selection' | 'custom' | 'interview' | 'feedback'>('selection');
   const [selectedInterviewer, setSelectedInterviewer] = useState(null);
@@ -437,6 +440,10 @@ const MockInterview = () => {
 
   // Start interview
   const startInterview = async (interviewer: any) => {
+    // Check subscription limit before starting interview
+    const canUse = await checkAndUseFeature('mockInterviews');
+    if (!canUse) return;
+    
     setSelectedInterviewer(interviewer);
     setCurrentView('interview');
     setInterviewState('interviewing');

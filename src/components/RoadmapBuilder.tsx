@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Target, Calendar, CheckCircle, Clock, Trash2, Sparkles, MapPin, Users, BookOpen, Award, Briefcase } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Milestone {
   id: string;
@@ -54,6 +55,7 @@ interface UserProfile {
 }
 
 const RoadmapBuilder = () => {
+  const { checkAndUseFeature } = useSubscription();
   const [userProfile, setUserProfile] = useState<UserProfile>({
     targetRole: '',
     currentRole: '',
@@ -93,6 +95,10 @@ const RoadmapBuilder = () => {
       });
       return;
     }
+
+    // Check subscription limit before generating roadmap
+    const canUse = await checkAndUseFeature('roadmapGenerator');
+    if (!canUse) return;
 
     setIsGenerating(true);
 

@@ -10,6 +10,7 @@ import { Mail, Download, Eye, Wand2, Copy, CheckCircle } from 'lucide-react';
 import DownloadModal from '@/components/DownloadModal';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface CoverLetterData {
   recipientName: string;
@@ -46,6 +47,7 @@ const CoverLetterBuilder = () => {
   const [copied, setCopied] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const { toast } = useToast();
+  const { checkAndUseFeature } = useSubscription();
 
   const tones = [
     { value: 'professional', label: 'Professional' },
@@ -69,6 +71,10 @@ const CoverLetterBuilder = () => {
       });
       return;
     }
+
+    // Check subscription limit before generating
+    const canUse = await checkAndUseFeature('coverLetters');
+    if (!canUse) return;
 
     setIsGenerating(true);
     
@@ -138,16 +144,17 @@ const CoverLetterBuilder = () => {
 
   const loadSampleData = () => {
     setFormData({
-      recipientName: 'Sarah Johnson',
-      companyName: 'TechInnovate Solutions',
-      position: 'Senior Software Engineer',
-      yourName: 'Alex Chen',
-      yourEmail: 'alex.chen@email.com',
-      yourPhone: '(555) 123-4567',
-      jobDescription: 'We are looking for a Senior Software Engineer to join our dynamic team...',
-      tone: 'professional',
-      experience: 'software development with 5+ years of experience in full-stack development',
-      motivation: 'I am excited about the opportunity to work on cutting-edge projects and contribute to a company that values innovation and teamwork.'
+      recipientName: "Hiring Manager",
+      companyName: "Tech Innovations Inc.",
+      position: "Senior Software Engineer",
+      yourName: "Jane Doe",
+      yourEmail: "jane.doe@email.com",
+      yourPhone: "+1 (555) 123-4567",
+      yourAddress: "123 Main St, San Francisco, CA 94105",
+      jobDescription: "We are looking for a Senior Software Engineer with 5+ years of experience in React, Node.js, and cloud technologies...",
+      tone: "professional",
+      experience: "I have 6 years of experience in full-stack development, specializing in React and Node.js. I've led teams and delivered multiple enterprise-level applications.",
+      motivation: "I'm excited about the opportunity to work at Tech Innovations because of your commitment to cutting-edge technology and innovative solutions."
     });
   };
 

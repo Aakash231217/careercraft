@@ -11,6 +11,7 @@ import { Link, Star, TrendingUp, AlertCircle, CheckCircle, Globe, FileText, Ligh
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface ProjectAnalysis {
   score: number;
@@ -25,6 +26,7 @@ interface ProjectAnalysis {
 }
 
 const ProjectFeedback = () => {
+  const { checkAndUseFeature } = useSubscription();
   const [projectUrl, setProjectUrl] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -41,6 +43,10 @@ const ProjectFeedback = () => {
       });
       return;
     }
+
+    // Check subscription limit before analyzing project
+    const canUse = await checkAndUseFeature('projectFeedback');
+    if (!canUse) return;
 
     setIsAnalyzing(true);
     setProgress(0);

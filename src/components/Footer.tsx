@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Mail, MapPin, Phone, Twitter, Linkedin, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const containerVariants = {
@@ -216,16 +217,23 @@ const Footer = () => {
             variants={containerVariants}
             className="flex space-x-8 text-lg"
           >
-            {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link, index) => (
-              <motion.a
+            {[
+              { text: 'Privacy Policy', path: '/privacy-policy' },
+              { text: 'Terms of Service', path: '/terms-of-service' },
+              { text: 'Cookie Policy', path: '/cookie-policy' }
+            ].map((link, index) => (
+              <motion.div
                 key={index}
                 variants={itemVariants}
-                href="#"
-                className="text-gray-400 hover:text-white transition-all duration-300 hover:underline decoration-purple-400"
                 whileHover={{ y: -2 }}
               >
-                {link}
-              </motion.a>
+                <Link
+                  to={link.path}
+                  className="text-gray-400 hover:text-white transition-all duration-300 hover:underline decoration-purple-400"
+                >
+                  {link.text}
+                </Link>
+              </motion.div>
             ))}
           </motion.div>
         </motion.div>

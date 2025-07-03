@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Trash2, Download, Eye, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Education {
   degree: string;
@@ -67,11 +68,16 @@ const ResumeBuilder = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingField, setGeneratingField] = useState<string>('');
   const { toast } = useToast();
+  const { checkAndUseFeature } = useSubscription();
   const resumeRef = useRef<HTMLDivElement>(null);
   const resumeContentRef = useRef<HTMLDivElement>(null); // Add this line
 
 
   const generateWithAI = async (prompt: string, field: string) => {
+    // Check subscription limit before generating
+    const canUse = await checkAndUseFeature('resumes');
+    if (!canUse) return null;
+
     setIsGenerating(true);
     setGeneratingField(field);
 

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, CheckCircle, XCircle, BookOpen } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Question {
   id: number;
@@ -45,6 +46,7 @@ interface QuizResult {
 }
 
 const QuizTool: React.FC = () => {
+  const { checkAndUseFeature } = useSubscription();
   const [step, setStep] = useState<'setup' | 'quiz' | 'results'>('setup');
   const [topic, setTopic] = useState('');
   const [numQuestions, setNumQuestions] = useState(10);
@@ -80,6 +82,10 @@ const QuizTool: React.FC = () => {
 
   const generateQuiz = async () => {
     if (!topic.trim()) return;
+    
+    // Check subscription limit before generating quiz
+    const canUse = await checkAndUseFeature('quizGenerates');
+    if (!canUse) return;
     
     setIsLoading(true);
     try {
