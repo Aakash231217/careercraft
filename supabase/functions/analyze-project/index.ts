@@ -1,12 +1,12 @@
-
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
@@ -28,7 +28,7 @@ serve(async (req) => {
       throw new Error('Project URL is required');
     }
 
-    // First, scrape the project content
+    // First, scrape the project content with improved error handling
     console.log('Scraping project content...');
     let scrapedContent = '';
     let isGitHub = false;
@@ -40,40 +40,89 @@ serve(async (req) => {
         // For GitHub, try to get the README or repository info
         const readmeUrl = projectUrl.replace('github.com', 'raw.githubusercontent.com') + '/main/README.md';
         try {
-          const readmeResponse = await fetch(readmeUrl);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
+          const readmeResponse = await fetch(readmeUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; Supabase-Function/1.0)'
+            }
+          });
+          clearTimeout(timeoutId);
+          
           if (readmeResponse.ok) {
             scrapedContent = await readmeResponse.text();
           }
-        } catch {
+        } catch (readmeError) {
+          console.log('README fetch failed, trying main page:', readmeError);
           // Fallback to main page
-          const scrapeResponse = await fetch(projectUrl);
-          if (scrapeResponse.ok) {
-            scrapedContent = await scrapeResponse.text();
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const scrapeResponse = await fetch(projectUrl, {
+              signal: controller.signal,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; Supabase-Function/1.0)'
+              }
+            });
+            clearTimeout(timeoutId);
+            
+            if (scrapeResponse.ok) {
+              scrapedContent = await scrapeResponse.text();
+            }
+          } catch (fallbackError) {
+            console.log('Fallback scraping failed:', fallbackError);
+            scrapedContent = 'GitHub repository content could not be accessed.';
           }
         }
       } else {
         // For live websites
-        const scrapeResponse = await fetch(projectUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for websites
+          
+          const scrapeResponse = await fetch(projectUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Accept-Encoding': 'gzip, deflate',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1'
+            }
+          });
+          clearTimeout(timeoutId);
+          
+          if (scrapeResponse.ok) {
+            const htmlContent = await scrapeResponse.text();
+            // Extract text content and limit size with better cleaning
+            scrapedContent = htmlContent
+              .replace(/<script[^>]*>.*?<\/script>/gis, '')
+              .replace(/<style[^>]*>.*?<\/style>/gis, '')
+              .replace(/<noscript[^>]*>.*?<\/noscript>/gis, '')
+              .replace(/<!--[\s\S]*?-->/g, '')
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .trim()
+              .substring(0, 8000); // Limit for better analysis
+          } else {
+            scrapedContent = `Website returned status ${scrapeResponse.status}. Content could not be accessed.`;
           }
-        });
-        
-        if (scrapeResponse.ok) {
-          const htmlContent = await scrapeResponse.text();
-          // Extract text content and limit size
-          scrapedContent = htmlContent
-            .replace(/<script[^>]*>.*?<\/script>/gi, '')
-            .replace(/<style[^>]*>.*?<\/style>/gi, '')
-            .replace(/<[^>]*>/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .substring(0, 8000); // Increased limit for better analysis
+        } catch (websiteError) {
+          console.log('Website scraping failed:', websiteError);
+          scrapedContent = 'Website content could not be accessed due to network or security restrictions.';
         }
       }
     } catch (scrapeError) {
-      console.log('Could not scrape content:', scrapeError);
-      scrapedContent = 'Content could not be scraped automatically.';
+      console.error('General scraping error:', scrapeError);
+      scrapedContent = 'Content could not be scraped automatically due to an unexpected error.';
     }
 
     const prompt = `You are a senior technical interviewer and hiring manager reviewing a software project for potential employment. Analyze this project THOROUGHLY and provide honest, realistic feedback with VARIED scores based on actual content analysis.

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Target, Calendar, CheckCircle, Clock, Trash2, Sparkles, MapPin, Users, BookOpen, Award, Briefcase } from 'lucide-react';
+import { Plus, Target, Calendar, CheckCircle, Clock, Trash2, Sparkles, MapPin, Users, BookOpen, Award, Briefcase, Save, FolderOpen, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -42,6 +42,16 @@ interface RoadmapData {
   projectRecommendations: string[];
 }
 
+interface SavedRoadmap {
+  id: string;
+  title: string;
+  userProfile: UserProfile;
+  roadmapData: RoadmapData;
+  milestones: Milestone[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface UserProfile {
   targetRole: string;
   currentRole: string;
@@ -72,6 +82,10 @@ const RoadmapBuilder = () => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showProfile, setShowProfile] = useState(true);
+  const [savedRoadmaps, setSavedRoadmaps] = useState<SavedRoadmap[]>([]);
+  const [currentRoadmapId, setCurrentRoadmapId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const experienceLevels = [
@@ -85,6 +99,174 @@ const RoadmapBuilder = () => {
   const timelines = ['6 months', '1 year', '18 months', '2 years', '3+ years'];
   const learningStyles = ['Visual (videos, diagrams)', 'Reading (books, articles)', 'Hands-on (projects, practice)', 'Interactive (courses, workshops)', 'Mixed approach'];
   const budgetOptions = ['Free resources only', 'Low budget ($0-$500)', 'Medium budget ($500-$2000)', 'Higher budget ($2000+)'];
+
+  // Load saved roadmaps on component mount
+  useEffect(() => {
+    loadSavedRoadmaps();
+  }, []);
+
+  // Save to localStorage whenever roadmap data changes
+  useEffect(() => {
+    if (roadmapData && milestones.length > 0) {
+      saveToLocalStorage();
+    }
+  }, [roadmapData, milestones]);
+
+  const loadSavedRoadmaps = async () => {
+    try {
+      setIsLoading(true);
+      
+      // First, try to load from localStorage
+      const localRoadmaps = localStorage.getItem('career-roadmaps');
+      if (localRoadmaps) {
+        const parsedRoadmaps = JSON.parse(localRoadmaps);
+        setSavedRoadmaps(parsedRoadmaps);
+        
+        // Load the most recent roadmap if available
+        if (parsedRoadmaps.length > 0) {
+          const mostRecent = parsedRoadmaps[parsedRoadmaps.length - 1];
+          loadRoadmap(mostRecent);
+        }
+      }
+      
+      // TODO: Also load from database for syncing across devices
+      // const { data: dbRoadmaps } = await supabase.from('roadmaps').select('*');
+      
+    } catch (error) {
+      console.error('Error loading saved roadmaps:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveToLocalStorage = () => {
+    try {
+      const roadmapToSave: SavedRoadmap = {
+        id: currentRoadmapId || Date.now().toString(),
+        title: `${roadmapData?.careerGoal.title || 'Career Roadmap'} - ${new Date().toLocaleDateString()}`,
+        userProfile,
+        roadmapData: roadmapData!,
+        milestones,
+        createdAt: currentRoadmapId ? 
+          savedRoadmaps.find(r => r.id === currentRoadmapId)?.createdAt || new Date().toISOString() : 
+          new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const existingIndex = savedRoadmaps.findIndex(r => r.id === roadmapToSave.id);
+      let updatedRoadmaps;
+      
+      if (existingIndex >= 0) {
+        // Update existing roadmap
+        updatedRoadmaps = [...savedRoadmaps];
+        updatedRoadmaps[existingIndex] = roadmapToSave;
+      } else {
+        // Add new roadmap
+        updatedRoadmaps = [...savedRoadmaps, roadmapToSave];
+      }
+
+      setSavedRoadmaps(updatedRoadmaps);
+      setCurrentRoadmapId(roadmapToSave.id);
+      localStorage.setItem('career-roadmaps', JSON.stringify(updatedRoadmaps));
+      
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  const saveRoadmap = async () => {
+    if (!roadmapData || milestones.length === 0) {
+      toast({
+        title: "Nothing to Save",
+        description: "Please generate a roadmap first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      saveToLocalStorage();
+      
+      // TODO: Also save to database
+      // const { error } = await supabase.from('roadmaps').upsert(roadmapToSave);
+      
+      toast({
+        title: "Roadmap Saved!",
+        description: "Your roadmap has been saved successfully.",
+      });
+      
+    } catch (error) {
+      console.error('Error saving roadmap:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save roadmap. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadRoadmap = (savedRoadmap: SavedRoadmap) => {
+    setUserProfile(savedRoadmap.userProfile);
+    setRoadmapData(savedRoadmap.roadmapData);
+    setMilestones(savedRoadmap.milestones);
+    setCurrentRoadmapId(savedRoadmap.id);
+    setShowProfile(false);
+    
+    toast({
+      title: "Roadmap Loaded",
+      description: `Loaded "${savedRoadmap.title}"`
+    });
+  };
+
+  const deleteRoadmap = async (roadmapId: string) => {
+    try {
+      const updatedRoadmaps = savedRoadmaps.filter(r => r.id !== roadmapId);
+      setSavedRoadmaps(updatedRoadmaps);
+      localStorage.setItem('career-roadmaps', JSON.stringify(updatedRoadmaps));
+      
+      // If deleting current roadmap, reset the view
+      if (currentRoadmapId === roadmapId) {
+        setRoadmapData(null);
+        setMilestones([]);
+        setCurrentRoadmapId(null);
+        setShowProfile(true);
+      }
+      
+      toast({
+        title: "Roadmap Deleted",
+        description: "The roadmap has been removed.",
+      });
+      
+    } catch (error) {
+      console.error('Error deleting roadmap:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete roadmap. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createNewRoadmap = () => {
+    setRoadmapData(null);
+    setMilestones([]);
+    setCurrentRoadmapId(null);
+    setShowProfile(true);
+    setUserProfile({
+      targetRole: '',
+      currentRole: '',
+      experience: '',
+      industry: '',
+      timeline: '',
+      skills: '',
+      interests: '',
+      preferredLearningStyle: '',
+      budget: ''
+    });
+  };
 
   const generateRoadmap = async () => {
     if (!userProfile.targetRole || !userProfile.industry) {
@@ -119,12 +301,18 @@ const RoadmapBuilder = () => {
           status: 'not-started' as const
         }));
         setMilestones(milestonesWithStatus);
+        setCurrentRoadmapId(null); // Reset current roadmap ID for new generation
         setShowProfile(false);
         
         toast({
           title: "Roadmap Generated!",
           description: `Your personalized career roadmap for ${data.careerGoal.title} has been created.`,
         });
+        
+        // Auto-save the new roadmap
+        setTimeout(() => {
+          saveToLocalStorage();
+        }, 500);
       }
     } catch (error) {
       console.error('Error generating roadmap:', error);
@@ -179,12 +367,105 @@ const RoadmapBuilder = () => {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2">AI Career Roadmap Builder</h2>
-        <p className="text-muted-foreground">Get a personalized career development roadmap powered by AI</p>
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your roadmaps...</p>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">AI Roadmap Builder</h1>
+          <p className="text-muted-foreground">
+            Create a personalized career development roadmap powered by AI
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          {roadmapData && (
+            <Button
+              onClick={saveRoadmap}
+              disabled={isSaving}
+              className="flex items-center"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save Roadmap'}
+            </Button>
+          )}
+          
+          <Button
+            onClick={createNewRoadmap}
+            variant="outline"
+            className="flex items-center"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Roadmap
+          </Button>
+          
+          {!showProfile && (
+            <Button
+              onClick={() => setShowProfile(true)}
+              variant="outline"
+              className="flex items-center"
+            >
+              <Target className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Saved Roadmaps Section */}
+      {savedRoadmaps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FolderOpen className="mr-2 h-5 w-5" />
+              Saved Roadmaps ({savedRoadmaps.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {savedRoadmaps.map((roadmap) => (
+                <div key={roadmap.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div className="flex-1">
+                    <h3 className="font-medium">{roadmap.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {roadmap.roadmapData?.careerGoal?.title || 'Untitled'} • Created {new Date(roadmap.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => loadRoadmap(roadmap)}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center"
+                    >
+                      <Download className="mr-1 h-4 w-4" />
+                      Load
+                    </Button>
+                    <Button
+                      onClick={() => deleteRoadmap(roadmap.id)}
+                      variant="destructive"
+                      size="sm"
+                      className="flex items-center"
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showProfile ? (
         <Card>
@@ -337,7 +618,7 @@ const RoadmapBuilder = () => {
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center">
                       <Target className="mr-2 h-5 w-5 text-blue-600" />
-                      Career Goal: {roadmapData.careerGoal.title}
+                      Career Goal: {roadmapData.careerGoal?.title || 'Untitled'}
                     </span>
                     <Button onClick={() => setShowProfile(true)} variant="outline" size="sm">
                       Edit Profile
@@ -345,16 +626,16 @@ const RoadmapBuilder = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground mb-4">{roadmapData.careerGoal.description}</p>
+                  <p className="text-muted-foreground mb-4">{roadmapData.careerGoal?.description || 'No description available'}</p>
                   <div className="flex items-center space-x-4 text-sm">
-                    <Badge variant="secondary">Timeline: {roadmapData.careerGoal.timeline}</Badge>
-                    <Badge variant="secondary">Industry: {roadmapData.careerGoal.industry}</Badge>
+                    <Badge variant="secondary">Timeline: {roadmapData.careerGoal?.timeline || 'Not specified'}</Badge>
+                    <Badge variant="secondary">Industry: {roadmapData.careerGoal?.industry || 'Not specified'}</Badge>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Key Skills */}
-              {roadmapData.skillFocus && (
+              {roadmapData.skillFocus && roadmapData.skillFocus.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -475,7 +756,7 @@ const RoadmapBuilder = () => {
                   </Card>
                 )}
 
-                {roadmapData.projectRecommendations && (
+                {roadmapData.projectRecommendations && roadmapData.projectRecommendations.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -524,7 +805,7 @@ const RoadmapBuilder = () => {
                   </div>
                   <div className="mt-4">
                     <Progress 
-                      value={(milestones.filter(m => m.status === 'completed').length / milestones.length) * 100} 
+                      value={milestones.length > 0 ? (milestones.filter(m => m.status === 'completed').length / milestones.length) * 100 : 0} 
                       className="w-full"
                     />
                   </div>

@@ -5,18 +5,37 @@ import { User } from '@supabase/supabase-js';
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Free Trial',
     price: 0,
     currency: '₹',
     features: {
-      resumes: 3,
-      coverLetters: 5,
-      mockInterviews: 2,
-      quizGenerates: 3,
+      resumes: 1,
+      coverLetters: 1,
+      mockInterviews: 1,
+      quizGenerates: 1,
       quiz30MinEnabled: false,
-      roadmapGenerator: 2,
-      projectFeedback: 5,
-      salaryGuide: 10,
+      roadmapGenerator: 1,
+      projectFeedback: 1,
+      salaryGuide: 1,
+      hrContactList: 0,
+    }
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: 9,
+    currency: '₹',
+    popular: true,
+    features: {
+      resumes: 3,
+      coverLetters: 10,
+      mockInterviews: 3,
+      quizGenerates: 10,
+      quiz30MinEnabled: false,
+      roadmapGenerator: 3,
+      projectFeedback: 10,
+      salaryGuide: 15,
+      hrContactList: 30, // 1 HR email per day for 30 days
     }
   },
   {
@@ -24,16 +43,16 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: 'Pro',
     price: 69,
     currency: '₹',
-    popular: true,
     features: {
       resumes: 10,
-      coverLetters: 30,
-      mockInterviews: 10,
-      quizGenerates: 30,
+      coverLetters: 50,
+      mockInterviews: 15,
+      quizGenerates: 50,
       quiz30MinEnabled: true,
       roadmapGenerator: 'unlimited',
       projectFeedback: 'unlimited',
       salaryGuide: 'unlimited',
+      hrContactList: 150, // 5 HR emails per day for 30 days
     }
   },
   {
@@ -50,6 +69,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       roadmapGenerator: 'unlimited',
       projectFeedback: 'unlimited',
       salaryGuide: 'unlimited',
+      hrContactList: 300, // 10 HR emails per day for 30 days
     }
   }
 ];
@@ -76,6 +96,7 @@ export class SubscriptionService {
         roadmapGenerator: 0,
         projectFeedback: 0,
         salaryGuide: 0,
+        hrContactList: 0,
         lastReset: now.toISOString(),
       }
     };
@@ -118,6 +139,7 @@ export class SubscriptionService {
         roadmapGenerator: 0,
         projectFeedback: 0,
         salaryGuide: 0,
+        hrContactList: 0,
         lastReset: now.toISOString(),
       };
       this.saveUserSubscription(userId, subscription);
@@ -146,9 +168,19 @@ export class SubscriptionService {
     }
 
     if (typeof limit === 'number' && typeof used === 'number' && used >= limit) {
+      let upgradeMessage = '';
+      
+      if (subscription.tier === 'free') {
+        upgradeMessage = `You've used your free trial for ${feature}! Upgrade to Starter (₹9/month) to continue using this feature.`;
+      } else if (subscription.tier === 'starter') {
+        upgradeMessage = `You've reached your monthly limit of ${limit} ${feature}. Upgrade to Pro (₹69/month) for more features!`;
+      } else {
+        upgradeMessage = `You've reached your monthly limit of ${limit} ${feature}. Upgrade to Premium (₹109/month) for unlimited access!`;
+      }
+      
       return { 
         allowed: false, 
-        reason: `You've reached your monthly limit of ${limit} ${feature}. Upgrade to Pro or Premium for more!`,
+        reason: upgradeMessage,
         limit,
         used
       };

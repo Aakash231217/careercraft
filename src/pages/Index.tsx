@@ -36,8 +36,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ColdEmailOutreach } from "@/components/outreach/ColdEmailOutreach";
 import QuizTool from "@/components/QuizTool";
 import Billing from "@/components/Billing";
+import HrContactList from "@/components/HrContactList";
 
-type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'billing' | null;
+type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'billing' | 'hr-contact-list' | null;
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState<ActiveTool>(null);
@@ -124,6 +125,8 @@ const Index = () => {
           return <QuizTool />;
         case 'billing':
           return <Billing />;
+        case 'hr-contact-list':
+          return <HrContactList />;
         default:
           return null;
       }
@@ -231,7 +234,14 @@ const Index = () => {
       gradient: "from-amber-500 via-orange-500 to-red-500",
       hoverGradient: "hover:from-amber-600 hover:via-orange-600 hover:to-red-600"
     },
-   
+    {
+      id: 'hr-contact-list' as ActiveTool,
+      title: "HR Contact List",
+      description: "Access a curated list of HR contacts from top companies refreshed everyday",
+      icon: Mail,
+      gradient: "from-green-500 via-emerald-500 to-teal-500",
+      hoverGradient: "hover:from-green-600 hover:via-emerald-600 hover:to-teal-600"
+    }
   ];
 
   const containerVariants = {
@@ -265,30 +275,32 @@ const Index = () => {
         <FloatingElements />
 
         {/* Header with Auth */}
-        <div className="absolute top-6 right-6 z-50">
-          <div className="flex items-center gap-4 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-full p-3 border border-white/30 dark:border-gray-700/30">
+        <div className="absolute top-4 right-4 left-4 md:top-6 md:right-6 md:left-auto z-50">
+          <div className="flex items-center justify-between md:justify-end gap-2 md:gap-4 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-full p-2 md:p-3 border border-white/30 dark:border-gray-700/30">
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-700 dark:text-gray-300">Welcome, {user.email}</span>
-                <Button onClick={handleSignOut} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-2 md:gap-3 flex-1 md:flex-none">
+                <span className="text-xs md:text-sm text-gray-700 dark:text-gray-300 truncate max-w-32 md:max-w-none">
+                  Welcome, {user.email?.split('@')[0]}
+                </span>
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50 text-xs md:text-sm px-2 md:px-3">
                   Sign Out
                 </Button>
               </div>
             ) : (
-              <Button onClick={() => setShowAuthDialog(true)} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50">
+              <Button onClick={() => setShowAuthDialog(true)} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50 text-xs md:text-sm px-2 md:px-3">
                 Sign In
               </Button>
             )}
-            <div className="flex items-center gap-2">
-              <Sun className="h-4 w-4 text-yellow-500" />
+            <div className="flex items-center gap-1 md:gap-2">
+              <Sun className="h-3 w-3 md:h-4 md:w-4 text-yellow-500" />
               <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-              <Moon className="h-4 w-4 text-blue-400" />
+              <Moon className="h-3 w-3 md:h-4 md:w-4 text-blue-400" />
             </div>
           </div>
         </div>
 
         {/* Hero Section */}
-        <section className="pt-12 pb-8 px-4 text-center relative z-10">
+        <section className="pt-16 md:pt-20 pb-8 px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -299,9 +311,9 @@ const Index = () => {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-8"
+              className="mb-6 md:mb-8"
             >
-              <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6 leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 md:mb-6 leading-tight">
                 Adaptius Pro
               </h1>
             </motion.div>
@@ -310,9 +322,10 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
+              className="text-base md:text-lg lg:text-xl text-gray-700 dark:text-gray-300 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed px-2"
             >
-              Transform your career with our comprehensive suite of AI-powered tools. 
+              Transform your career with our comprehensive suite of AI-powered tools.
+              <br className="hidden md:block" />
               {user ? "Welcome back! Choose a tool to continue your career journey." : "Sign up to unlock all premium features and accelerate your professional growth."}
             </motion.p>
 
@@ -320,19 +333,19 @@ const Index = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-wrap justify-center gap-4 mb-12"
+              className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 md:mb-12 px-2"
             >
-              <div className="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="px-3 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
                 ✨ AI-Powered
               </div>
-              <div className="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="px-3 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
                 🚀 Career Growth
               </div>
-              <div className="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="px-3 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-white/40 dark:border-gray-700/40 text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
                 💼 Professional
               </div>
               {user && (
-                <div className="px-4 py-2 bg-green-500/20 backdrop-blur-sm rounded-full border border-green-400/40 text-sm font-medium text-green-700 dark:text-green-300">
+                <div className="px-3 md:px-4 py-1.5 md:py-2 bg-green-500/20 backdrop-blur-sm rounded-full border border-green-400/40 text-xs md:text-sm font-medium text-green-700 dark:text-green-300">
                   ✅ Premium Access
                 </div>
               )}
@@ -341,14 +354,14 @@ const Index = () => {
         </section>
 
         {/* Tools Grid */}
-        <section className="pt-8 pb-16 px-4 relative z-10">
+        <section className="pt-4 md:pt-8 pb-12 md:pb-16 px-4 relative z-10">
           <div className="max-w-7xl mx-auto">
 
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl font-bold text-center bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-4"
+              className="text-2xl md:text-3xl lg:text-4xl font-bold text-center bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-3 md:mb-4"
             >
               Choose Your Career Tool
             </motion.h2>
@@ -357,7 +370,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-center text-gray-600 dark:text-gray-400 mb-12 text-lg"
+              className="text-center text-gray-600 dark:text-gray-400 mb-8 md:mb-12 text-sm md:text-base lg:text-lg px-2"
             >
               Professional tools designed to elevate your career journey
             </motion.p>
@@ -366,7 +379,7 @@ const Index = () => {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
             >
               {tools.map((tool) => {
                 const IconComponent = tool.icon;

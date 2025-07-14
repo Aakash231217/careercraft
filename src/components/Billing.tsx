@@ -16,7 +16,7 @@ import {
   Pizza
 } from 'lucide-react';
 import { SubscriptionService, SUBSCRIPTION_PLANS } from '@/services/subscriptionService';
-import { UserSubscription, SubscriptionPlan } from '@/types/subscription';
+import { UserSubscription, SubscriptionPlan, PlanFeatures } from '@/types/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -90,7 +90,8 @@ const Billing = () => {
     return Math.min((used / limit) * 100, 100);
   };
 
-  const formatFeatureLimit = (limit: number | 'unlimited'): string => {
+  const formatFeatureLimit = (limit: number | 'unlimited' | undefined): string => {
+    if (limit === undefined || limit === null) return 'N/A';
     return limit === 'unlimited' ? 'Unlimited' : limit.toString();
   };
 
@@ -115,7 +116,7 @@ const Billing = () => {
       >
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Billing & Subscription</h1>
-          <p className="text-muted-foreground">Manage your plan and track your usage</p>
+          <p className="text-muted-foreground">Start with 1 free trial per tool, then upgrade to continue your career growth</p>
           <div className="mt-4 flex items-center gap-2 text-lg font-medium text-primary">
             <span>Your career</span>
             <span className="text-2xl font-bold">&gt;&gt;&gt;&gt;</span>
@@ -124,101 +125,229 @@ const Billing = () => {
           </div>
         </div>
 
-        {/* Current Plan Overview */}
-        <Card className="mb-8 border-2 border-primary/20">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  Your Current Plan: {currentPlan?.name}
-                  {currentPlan?.id === 'pro' && <Zap className="h-5 w-5 text-yellow-500" />}
-                  {currentPlan?.id === 'premium' && <Crown className="h-5 w-5 text-purple-500" />}
-                </CardTitle>
-                <CardDescription>
-                  {currentSubscription && (
-                    <div className="flex items-center gap-4 mt-2">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        Next renewal: {new Date(currentSubscription.endDate).toLocaleDateString()}
-                      </span>
-                      {currentPlan?.price > 0 && (
-                        <span className="flex items-center gap-1">
-                          <CreditCard className="h-4 w-4" />
-                          {currentPlan.currency}{currentPlan.price}/month
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </CardDescription>
+        {/* Free Trial Usage Tracking */}
+        {currentSubscription?.tier === 'free' && (
+          <Card className="mb-8 border-2 border-orange-500/30 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                <AlertCircle className="h-5 w-5" />
+                Free Trial Usage
+              </CardTitle>
+              <CardDescription className="text-orange-600 dark:text-orange-400">
+                You're using the free trial. Upgrade to Starter (₹9/month) to continue after your trials are exhausted.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${
+                    currentSubscription.usage.resumes >= 1 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {currentSubscription.usage.resumes}/1
+                  </div>
+                  <div className="text-sm text-muted-foreground">Resumes</div>
+                  <Progress 
+                    value={currentSubscription.usage.resumes * 100} 
+                    className="mt-2" 
+                  />
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${
+                    currentSubscription.usage.coverLetters >= 1 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {currentSubscription.usage.coverLetters}/1
+                  </div>
+                  <div className="text-sm text-muted-foreground">Cover Letters</div>
+                  <Progress 
+                    value={currentSubscription.usage.coverLetters * 100} 
+                    className="mt-2" 
+                  />
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${
+                    currentSubscription.usage.mockInterviews >= 1 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {currentSubscription.usage.mockInterviews}/1
+                  </div>
+                  <div className="text-sm text-muted-foreground">Mock Interviews</div>
+                  <Progress 
+                    value={currentSubscription.usage.mockInterviews * 100} 
+                    className="mt-2" 
+                  />
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${
+                    currentSubscription.usage.roadmapGenerator >= 1 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {currentSubscription.usage.roadmapGenerator}/1
+                  </div>
+                  <div className="text-sm text-muted-foreground">Roadmaps</div>
+                  <Progress 
+                    value={currentSubscription.usage.roadmapGenerator * 100} 
+                    className="mt-2" 
+                  />
+                </div>
               </div>
-            </div>
-          </CardHeader>
-        </Card>
+              
+              <div className="text-center">
+                <Button 
+                  onClick={() => handleUpgrade('starter')}
+                  disabled={processingPayment !== null}
+                  size="lg"
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-3"
+                >
+                  {processingPayment === 'starter' ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    <>Continue with Starter Plan - ₹9/month</>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Get 5 resumes, 10 cover letters, 3 roadmaps and more every month
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Usage Overview */}
-        {currentSubscription && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Monthly Usage</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(currentSubscription.usage).map(([feature, used]) => {
-                if (feature === 'lastReset') return null;
-                const limit = currentPlan?.features[feature as keyof typeof currentPlan.features];
-                const percentage = getUsagePercentage(used as number, limit as any);
-                
-                return (
-                  <Card key={feature} className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium capitalize">
-                          {feature.replace(/([A-Z])/g, ' $1').trim()}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {used} / {formatFeatureLimit(limit as any)}
-                        </span>
-                      </div>
-                      {limit !== 'unlimited' && (
-                        <Progress value={percentage} className="h-2" />
-                      )}
-                      {percentage >= 80 && limit !== 'unlimited' && (
-                        <div className="flex items-center gap-1 text-xs text-orange-500">
-                          <AlertCircle className="h-3 w-3" />
-                          Approaching limit
+        {/* Current Plan Overview for Paid Users */}
+        {currentSubscription?.tier !== 'free' && (
+          <>
+            <Card className="mb-8 border-2 border-primary/20">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      Your Current Plan: {currentPlan?.name}
+                      {currentPlan?.id === 'starter' && <TrendingUp className="h-5 w-5 text-green-500" />}
+                      {currentPlan?.id === 'pro' && <Zap className="h-5 w-5 text-yellow-500" />}
+                      {currentPlan?.id === 'premium' && <Crown className="h-5 w-5 text-purple-500" />}
+                    </CardTitle>
+                    <CardDescription>
+                      {currentSubscription && (
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            Next renewal: {new Date(currentSubscription.endDate).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <CreditCard className="h-4 w-4" />
+                            {currentPlan?.currency}{currentPlan?.price}/month
+                          </span>
                         </div>
                       )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Usage Overview for Paid Plans */}
+            {currentSubscription && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">Monthly Usage</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(currentSubscription.usage).map(([feature, used]) => {
+                    if (feature === 'lastReset') return null;
+                    const limit = currentPlan?.features[feature as keyof PlanFeatures];
+                    // Skip features that don't exist in current plan
+                    if (limit === undefined) return null;
+                    const percentage = getUsagePercentage(used as number, limit as any);
+                    
+                    return (
+                      <Card key={feature} className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium capitalize">
+                              {feature.replace(/([A-Z])/g, ' $1').trim()}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {used} / {formatFeatureLimit(limit as any)}
+                            </span>
+                          </div>
+                          {limit !== 'unlimited' && (
+                            <Progress value={percentage} className="h-2" />
+                          )}
+                          {percentage >= 80 && limit !== 'unlimited' && (
+                            <div className="flex items-center gap-1 text-xs text-orange-500">
+                              <AlertCircle className="h-3 w-3" />
+                              Approaching limit
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Pricing Plans */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Available Plans</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            {currentSubscription?.tier === 'free' ? 'Upgrade Plans' : 'Available Plans'}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {SUBSCRIPTION_PLANS.map((plan) => (
+            {SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free').map((plan, index) => (
               <motion.div
                 key={plan.id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="relative"
               >
-                <Card className={`relative h-full ${plan.popular ? 'border-2 border-primary' : ''}`}>
+                <Card className={`h-full ${currentPlan?.id === plan.id ? 'ring-2 ring-primary' : ''} ${plan.popular ? 'border-primary' : ''}`}>
+                  <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r rounded-t-lg ${
+                    plan.id === 'free' ? 'from-gray-400 to-gray-500' :
+                    plan.id === 'starter' ? 'from-green-400 to-green-500' :
+                    plan.id === 'pro' ? 'from-blue-500 to-purple-500' :
+                    'from-purple-500 to-pink-500'
+                  }`} />
                   {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      Most Popular
-                    </Badge>
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-medium">
+                        {plan.id === 'starter' ? 'Best Value' : 'Most Popular'}
+                      </Badge>
+                    </div>
+                  )}
+                  {plan.id === 'free' && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-gray-500 text-white px-3 py-1 text-sm font-medium">
+                        Try Free
+                      </Badge>
+                    </div>
                   )}
                   <CardHeader>
                     <CardTitle className="text-2xl flex items-center justify-between">
                       {plan.name}
+                      {plan.id === 'starter' && <TrendingUp className="h-5 w-5 text-green-500" />}
                       {plan.id === 'pro' && <Zap className="h-5 w-5 text-yellow-500" />}
                       {plan.id === 'premium' && <Crown className="h-5 w-5 text-purple-500" />}
                     </CardTitle>
                     <div className="mt-4">
                       <span className="text-4xl font-bold">{plan.currency}{plan.price}</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">{plan.price === 0 ? ' - No payment required' : '/month'}</span>
                     </div>
+                    {plan.id === 'starter' && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Ideal for regular job seekers and students
+                      </p>
+                    )}
+                    {plan.id === 'pro' && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Perfect for active job seekers and professionals
+                      </p>
+                    )}
+                    {plan.id === 'premium' && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Unlimited access for career coaches and recruiters
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <ul className="space-y-2">
@@ -261,9 +390,14 @@ const Billing = () => {
                     </ul>
 
                     <Button
-                      className="w-full"
+                      className={`w-full ${
+                        plan.id === 'free' ? 'bg-gray-500 hover:bg-gray-600' :
+                        plan.id === 'starter' ? 'bg-green-500 hover:bg-green-600' :
+                        plan.id === 'pro' ? 'bg-blue-500 hover:bg-blue-600' :
+                        'bg-purple-500 hover:bg-purple-600'
+                      } text-white`}
                       variant={currentPlan?.id === plan.id ? "secondary" : "default"}
-                      disabled={currentPlan?.id === plan.id || processingPayment !== null}
+                      disabled={currentPlan?.id === plan.id || processingPayment !== null || plan.id === 'free'}
                       onClick={() => handleUpgrade(plan.id)}
                     >
                       {processingPayment === plan.id ? (
@@ -273,8 +407,10 @@ const Billing = () => {
                         </div>
                       ) : currentPlan?.id === plan.id ? (
                         'Current Plan'
+                      ) : plan.id === 'free' ? (
+                        'Automatic on Sign Up'
                       ) : (
-                        'Upgrade Now'
+                        `Upgrade to ${plan.name}`
                       )}
                     </Button>
                   </CardContent>

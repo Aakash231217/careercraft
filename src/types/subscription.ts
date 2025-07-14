@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'free' | 'pro' | 'premium';
+export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'premium';
 
 export interface SubscriptionPlan {
   id: SubscriptionTier;
@@ -18,6 +18,7 @@ export interface PlanFeatures {
   roadmapGenerator: number | 'unlimited';
   projectFeedback: number | 'unlimited';
   salaryGuide: number | 'unlimited';
+  hrContactList: number | 'unlimited';
 }
 
 export interface UserUsage {
@@ -28,6 +29,7 @@ export interface UserUsage {
   roadmapGenerator: number;
   projectFeedback: number;
   salaryGuide: number;
+  hrContactList: number;
   lastReset: string;
 }
 

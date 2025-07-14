@@ -7,7 +7,11 @@ declare namespace Deno {
 }
 
 // Declare modules for URL-based imports
-declare module "https://deno.land/std@0.168.0/http/server.ts" {
+declare module "https://deno.land/std@0.208.0/http/server.ts" {
+  export function serve(handler: (request: Request) => Response | Promise<Response>): void;
+}
+
+declare module "std/http/server.ts" {
   export function serve(handler: (request: Request) => Response | Promise<Response>): void;
 }
 
