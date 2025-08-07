@@ -17,38 +17,60 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Topic and number of questions are required' });
     }
 
-    const prompt = `Generate exactly ${numQuestions} multiple choice questions about "${topic}".
+    const prompt = `Generate exactly ${numQuestions} ENTERPRISE-LEVEL multiple choice questions about "${topic}".
 
 RETURN ONLY VALID JSON - NO OTHER TEXT OR FORMATTING.
 
-Format:
+DIFFICULTY REQUIREMENTS:
+- 60% of questions MUST be "hard" difficulty
+- 30% can be "medium" difficulty
+- 10% "easy" questions allowed
+
+ENTERPRISE-LEVEL QUESTION CRITERIA:
+1. Complex real-world scenarios requiring multi-step reasoning
+2. Edge cases, performance implications, and scalability concerns
+3. Advanced concepts, design patterns, and architectural decisions
+4. Integration challenges and cross-system interactions
+5. Security implications and best practices
+6. Production-level considerations (monitoring, debugging, optimization)
+7. Tricky scenarios with subtle differences between options
+8. Questions that test deep understanding, not memorization
+
+Format Example:
 [
   {
     "id": 1,
-    "question": "What is the time complexity of binary search?",
-    "options": ["O(n)", "O(log n)", "O(n log n)", "O(n²)"],
-    "correctAnswers": [1],
+    "question": "In a distributed microservices architecture handling 10M requests/day, you notice intermittent 504 Gateway Timeout errors during peak hours. Performance metrics show CPU at 45%, memory at 60%, but network latency spikes to 800ms. What is the MOST likely root cause?",
+    "options": [
+      "Thread pool exhaustion in the API gateway due to synchronous blocking calls",
+      "Database connection pool saturation causing request queuing", 
+      "Kubernetes pod autoscaling lag during traffic bursts",
+      "Service mesh circuit breaker triggering prematurely"
+    ],
+    "correctAnswers": [0],
     "multipleChoice": false,
-    "difficulty": "medium",
-    "explanation": "Binary search has O(log n) time complexity because it eliminates half of the search space in each iteration.",
+    "difficulty": "hard",
+    "explanation": "With low CPU/memory but high latency, blocking I/O operations are likely exhausting the thread pool, causing timeouts.",
     "category": "${topic}"
   }
 ]
 
-Rules:
+RULES:
 - Each question has exactly 4 options
+- All options must be plausible to experts - no obviously wrong answers
 - correctAnswers array contains indices (0,1,2,3) of correct options
-- multipleChoice: false for single correct answer, true for multiple
-- difficulty: "easy", "medium", or "hard"
-- Keep explanations under 100 characters
-- Make questions practical and relevant
+- For "hard" questions: require analysis of multiple factors, trade-offs, or edge cases
+- For "medium" questions: still require practical experience and deeper understanding
+- Explanations should reference industry standards, best practices, or real implications
+- Include specific metrics, tools, or technologies used in enterprise environments
+- Questions should test decision-making skills, not just knowledge recall
 
-Generate ${numQuestions} questions now:`;
+Generate ${numQuestions} CHALLENGING enterprise-level questions now:`;
 
     console.log('Generating quiz for topic:', topic, 'with', numQuestions, 'questions');
     
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4.1-2025-04-14",
       messages: [
         {
           role: "system", 

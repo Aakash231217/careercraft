@@ -64,7 +64,11 @@ interface UserProfile {
   budget: string;
 }
 
-const RoadmapBuilder = () => {
+interface RoadmapBuilderProps {
+  onLimitReached?: () => void;
+}
+
+const RoadmapBuilder = ({ onLimitReached }: RoadmapBuilderProps) => {
   const { checkAndUseFeature } = useSubscription();
   const [userProfile, setUserProfile] = useState<UserProfile>({
     targetRole: '',
@@ -279,7 +283,9 @@ const RoadmapBuilder = () => {
     }
 
     // Check subscription limit before generating roadmap
-    const canUse = await checkAndUseFeature('roadmapGenerator');
+    const canUse = await checkAndUseFeature('roadmapGenerator', {
+      onAutoRedirect: onLimitReached
+    });
     if (!canUse) return;
 
     setIsGenerating(true);

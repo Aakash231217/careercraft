@@ -45,7 +45,11 @@ interface QuizResult {
   };
 }
 
-const QuizTool: React.FC = () => {
+interface QuizToolProps {
+  onLimitReached?: () => void;
+}
+
+const QuizTool: React.FC<QuizToolProps> = ({ onLimitReached }) => {
   const { checkAndUseFeature } = useSubscription();
   const [step, setStep] = useState<'setup' | 'quiz' | 'results'>('setup');
   const [topic, setTopic] = useState('');
@@ -84,7 +88,9 @@ const QuizTool: React.FC = () => {
     if (!topic.trim()) return;
     
     // Check subscription limit before generating quiz
-    const canUse = await checkAndUseFeature('quizGenerates');
+    const canUse = await checkAndUseFeature('quizGenerates', {
+      onAutoRedirect: onLimitReached
+    });
     if (!canUse) return;
     
     setIsLoading(true);

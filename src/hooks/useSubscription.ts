@@ -35,6 +35,7 @@ export const useSubscription = () => {
       quizDuration?: number;
       onSuccess?: () => void;
       onLimit?: () => void;
+      onAutoRedirect?: () => void;
     }
   ): Promise<boolean> => {
     try {
@@ -73,6 +74,14 @@ export const useSubscription = () => {
           variant: "destructive",
         });
         options?.onLimit?.();
+        
+        // Auto-redirect to billing after 2 seconds
+        if (options?.onAutoRedirect) {
+          setTimeout(() => {
+            options.onAutoRedirect?.();
+          }, 2000);
+        }
+        
         return false;
       }
 

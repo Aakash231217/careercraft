@@ -2,11 +2,17 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Mail, MapPin, Phone, Twitter, Linkedin, Github } from 'lucide-react';
+import { FileText, Mail, MapPin, Phone, Linkedin, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-const Footer = () => {
+type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'hr-contact-list' | null;
+
+interface FooterProps {
+  onToolClick?: (toolId: ActiveTool) => void;
+}
+
+const Footer = ({ onToolClick }: FooterProps) => {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -96,22 +102,22 @@ const Footer = () => {
               variants={containerVariants}
               className="flex space-x-4"
             >
-              {[
-                { icon: Twitter, color: 'hover:text-blue-400' },
-                { icon: Linkedin, color: 'hover:text-blue-600' },
-                { icon: Github, color: 'hover:text-gray-400' }
-              ].map((social, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.2, y: -5 }}
-                  whileTap={{ scale: 0.9 }}
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ scale: 1.2, y: -5 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <a
+                  href="https://www.linkedin.com/company/adaptius"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
                 >
-                  <Button variant="ghost" size="sm" className={`text-gray-400 ${social.color} transition-all duration-300`}>
-                    <social.icon className="h-6 w-6" />
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-blue-600 transition-all duration-300">
+                    <Linkedin className="h-6 w-6" />
                   </Button>
-                </motion.div>
-              ))}
+                </a>
+              </motion.div>
             </motion.div>
           </motion.div>
 
@@ -120,11 +126,10 @@ const Footer = () => {
             <h3 className="font-bold text-xl mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Tools</h3>
             <ul className="space-y-4">
               {[
-                'Resume Builder',
-                'Resume Analyzer',
-                'Career Roadmap',
-                'Cover Letter Builder',
-                'Job Tracker'
+                { name: 'Resume Builder', id: 'resume-builder' as ActiveTool },
+                { name: 'Career Roadmap', id: 'roadmap' as ActiveTool },
+                { name: 'Cover Letter Builder', id: 'cover-letter' as ActiveTool },
+                { name: 'Salary Guide', id: 'salary-guide' as ActiveTool }
               ].map((tool, index) => (
                 <motion.li
                   key={index}
@@ -134,9 +139,12 @@ const Footer = () => {
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ x: 5 }}
                 >
-                  <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 text-lg hover:underline decoration-purple-400">
-                    {tool}
-                  </a>
+                  <button 
+                    onClick={() => onToolClick?.(tool.id)}
+                    className="text-gray-400 hover:text-white transition-all duration-300 text-lg hover:underline decoration-purple-400 bg-transparent border-none cursor-pointer"
+                  >
+                    {tool.name}
+                  </button>
                 </motion.li>
               ))}
             </ul>
@@ -147,11 +155,10 @@ const Footer = () => {
             <h3 className="font-bold text-xl mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Resources</h3>
             <ul className="space-y-4">
               {[
-                'Career Tips',
-                'Interview Prep',
-                'Salary Guide',
-                'Success Stories',
-                'Help Center'
+                { name: 'Mock Interview', id: 'mock-interviewer' as ActiveTool },
+                { name: 'Project Feedback', id: 'project-feedback' as ActiveTool },
+                { name: 'Quiz Generator', id: 'quiz-tool' as ActiveTool },
+                { name: 'HR Contact List', id: 'hr-contact-list' as ActiveTool }
               ].map((resource, index) => (
                 <motion.li
                   key={index}
@@ -161,9 +168,12 @@ const Footer = () => {
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ x: 5 }}
                 >
-                  <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 text-lg hover:underline decoration-blue-400">
-                    {resource}
-                  </a>
+                  <button 
+                    onClick={() => onToolClick?.(resource.id)}
+                    className="text-gray-400 hover:text-white transition-all duration-300 text-lg hover:underline decoration-blue-400 bg-transparent border-none cursor-pointer"
+                  >
+                    {resource.name}
+                  </button>
                 </motion.li>
               ))}
             </ul>
@@ -174,7 +184,8 @@ const Footer = () => {
             <h3 className="font-bold text-xl mb-6 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Contact</h3>
             <div className="space-y-4">
               {[
-                { icon: Mail, text: 'shalini@adaptius.in' },
+                { icon: Mail, text: 'aakash@adaptius.in' },
+                { icon: User, text: 'Aakash Singh' },
                 { icon: Phone, text: '+91- 7985113984' },
                 { icon: MapPin, text: 'Bengaluru, Karnataka' }
               ].map((contact, index) => (
@@ -220,7 +231,8 @@ const Footer = () => {
             {[
               { text: 'Privacy Policy', path: '/privacy-policy' },
               { text: 'Terms of Service', path: '/terms-of-service' },
-              { text: 'Cookie Policy', path: '/cookie-policy' }
+              { text: 'Cookie Policy', path: '/cookie-policy' },
+              {text: 'Refund Policy', path: '/refund-policy' },
             ].map((link, index) => (
               <motion.div
                 key={index}

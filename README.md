@@ -1,4 +1,15 @@
-# Welcome to your Lovable project
+# Career Development Platform
+
+A comprehensive career development platform with AI-powered tools for subscription management.
+
+## Features
+
+- 🤖 AI-powered Resume Builder, Cover Letter Generator, and Career Tools
+
+- 📊 Subscription Management with Freemium Model
+- 🎯 Mock Interview Simulator
+- 📈 Career Roadmap Builder
+- 💼 Cold Email Outreach System
 
 ## Project info
 
@@ -35,6 +46,13 @@ npm i
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+## Subscription Plans
+
+- **Free Trial**: ₹0 - 1 use per feature
+- **Starter**: ₹9/month - 3 resumes, 10 cover letters, 3 roadmaps
+- **Pro**: ₹69/month - 10 resumes, 50 cover letters, unlimited roadmaps
+- **Premium**: ₹109/month - Unlimited everything
 
 **Edit a file directly in GitHub**
 

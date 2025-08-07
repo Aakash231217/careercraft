@@ -99,40 +99,12 @@ const TermsOfService = () => {
               </ul>
             </motion.section>
 
-            <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-                <CreditCard className="h-6 w-6 text-blue-600" />
-                4. Subscription Plans and Billing
-              </h2>
-              <div className="space-y-4 text-gray-700">
-                <p className="leading-relaxed">
-                  We offer multiple subscription tiers:
-                </p>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <div>
-                    <strong>Free Plan:</strong> Limited access to basic features with usage restrictions
-                  </div>
-                  <div>
-                    <strong>Pro Plan (₹49/month):</strong> Enhanced features with increased usage limits
-                  </div>
-                  <div>
-                    <strong>Premium Plan (₹109/month):</strong> Unlimited access to all features
-                  </div>
-                </div>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Subscription fees are billed monthly in advance</li>
-                  <li>All fees are non-refundable unless otherwise required by law</li>
-                  <li>You may cancel your subscription at any time</li>
-                  <li>Cancellation takes effect at the end of the current billing period</li>
-                  <li>We reserve the right to change pricing with 30 days notice</li>
-                </ul>
-              </div>
-            </motion.section>
+           
 
             <motion.section variants={itemVariants}>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 <Scale className="h-6 w-6 text-blue-600" />
-                5. Acceptable Use Policy
+                4. Acceptable Use Policy
               </h2>
               <p className="text-gray-700 leading-relaxed mb-4">
                 You agree not to:
@@ -150,7 +122,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property Rights</h2>
+              <h2 className="text-2xl font-semibold mb-4">5. Intellectual Property Rights</h2>
               <div className="space-y-4 text-gray-700">
                 <p className="leading-relaxed">
                   <strong>Our Content:</strong> All content, features, and functionality of the Service are owned by 
@@ -171,7 +143,7 @@ const TermsOfService = () => {
             <motion.section variants={itemVariants}>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 <AlertTriangle className="h-6 w-6 text-blue-600" />
-                7. Disclaimers and Limitations of Liability
+                6. Disclaimers and Limitations of Liability
               </h2>
               <div className="space-y-4 text-gray-700">
                 <p className="leading-relaxed">
@@ -195,7 +167,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">8. Privacy and Data Protection</h2>
+              <h2 className="text-2xl font-semibold mb-4">7. Privacy and Data Protection</h2>
               <p className="text-gray-700 leading-relaxed">
                 Your use of our Service is also governed by our Privacy Policy, which describes how we collect, use, and 
                 protect your personal information. By using our Service, you consent to our data practices as described 
@@ -204,7 +176,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">9. Indemnification</h2>
+              <h2 className="text-2xl font-semibold mb-4">8. Indemnification</h2>
               <p className="text-gray-700 leading-relaxed">
                 You agree to indemnify and hold harmless Adaptius, its affiliates, and their respective officers, directors, 
                 employees, and agents from any claims, damages, losses, or expenses (including reasonable attorneys' fees) 
@@ -215,7 +187,7 @@ const TermsOfService = () => {
             <motion.section variants={itemVariants}>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 <Ban className="h-6 w-6 text-blue-600" />
-                10. Termination
+                9. Termination
               </h2>
               <p className="text-gray-700 leading-relaxed">
                 We may suspend or terminate your access to the Service at any time for violation of these Terms or for any 
@@ -225,7 +197,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">11. Governing Law and Dispute Resolution</h2>
+              <h2 className="text-2xl font-semibold mb-4">10. Governing Law and Dispute Resolution</h2>
               <p className="text-gray-700 leading-relaxed">
                 These Terms shall be governed by the laws of India. Any disputes arising from these Terms or your use of 
                 the Service shall be resolved through binding arbitration in Bengaluru, Karnataka, in accordance with the 
@@ -234,7 +206,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">12. Miscellaneous</h2>
+              <h2 className="text-2xl font-semibold mb-4">11. Miscellaneous</h2>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
                 <li><strong>Entire Agreement:</strong> These Terms constitute the entire agreement between you and Adaptius</li>
                 <li><strong>Severability:</strong> If any provision is found unenforceable, the remaining provisions shall continue in effect</li>
@@ -244,7 +216,7 @@ const TermsOfService = () => {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-2xl font-semibold mb-4">13. Contact Information</h2>
+              <h2 className="text-2xl font-semibold mb-4">12. Contact Information</h2>
               <p className="text-gray-700 leading-relaxed mb-4">
                 For questions about these Terms of Service, please contact us:
               </p>

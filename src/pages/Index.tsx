@@ -14,8 +14,7 @@ import {
   Mic,
   Linkedin,
   Mail,
-  Brain,
-  CreditCard
+  Brain
 } from "lucide-react";
 
 import ResumeBuilder from "@/components/ResumeBuilder";
@@ -36,9 +35,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ColdEmailOutreach } from "@/components/outreach/ColdEmailOutreach";
 import QuizTool from "@/components/QuizTool";
 import Billing from "@/components/Billing";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown, CreditCard, UserCircle, Settings } from "lucide-react";
 import HrContactList from "@/components/HrContactList";
 
-type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'billing' | 'hr-contact-list' | null;
+type ActiveTool = 'resume-builder' | 'resume-analyzer' | 'cover-letter' | 'salary-guide' | 'roadmap' | 'project-feedback' | 'portfolio-builder' | 'mock-interviewer' | 'cold-email-outreach' | 'quiz-tool' | 'hr-contact-list' | 'billing' | null;
 
 const Index = () => {
   const [activeTool, setActiveTool] = useState<ActiveTool>(null);
@@ -103,30 +104,34 @@ const Index = () => {
     }
   };
 
+  const handleLimitReached = () => {
+    setActiveTool('billing');
+  };
+
   if (activeTool) {
     const renderTool = () => {
       switch (activeTool) {
         case 'resume-builder':
-          return <ResumeBuilder />;
+          return <ResumeBuilder onLimitReached={handleLimitReached} />;
         case 'cover-letter':
-          return <CoverLetterBuilder />;
+          return <CoverLetterBuilder onLimitReached={handleLimitReached} />;
         case 'salary-guide':
-          return <SalaryGuide />;
+          return <SalaryGuide onLimitReached={handleLimitReached} />;
         case 'roadmap':
-          return <RoadmapBuilder />;
+          return <RoadmapBuilder onLimitReached={handleLimitReached} />;
         case 'project-feedback':
-          return <ProjectFeedback />;
+          return <ProjectFeedback onLimitReached={handleLimitReached} />;
        
         case 'mock-interviewer':
-          return <MockInterview />; // Fix the import name to match the exported component name
+          return <MockInterview onLimitReached={handleLimitReached} />; // Fix the import name to match the exported component name
         case 'cold-email-outreach':
-          return <ColdEmailOutreach />;
+          return <ColdEmailOutreach onLimitReached={handleLimitReached} />;
         case 'quiz-tool':
-          return <QuizTool />;
+          return <QuizTool onLimitReached={handleLimitReached} />;
         case 'billing':
           return <Billing />;
         case 'hr-contact-list':
-          return <HrContactList />;
+          return <HrContactList onLimitReached={handleLimitReached} />;
         default:
           return null;
       }
@@ -227,14 +232,6 @@ const Index = () => {
       hoverGradient: "hover:from-pink-600 hover:via-rose-600 hover:to-red-600"
     },
     {
-      id: 'billing' as ActiveTool,
-      title: "Billing & Plans",
-      description: "Manage your subscription and view usage limits",
-      icon: CreditCard,
-      gradient: "from-amber-500 via-orange-500 to-red-500",
-      hoverGradient: "hover:from-amber-600 hover:via-orange-600 hover:to-red-600"
-    },
-    {
       id: 'hr-contact-list' as ActiveTool,
       title: "HR Contact List",
       description: "Access a curated list of HR contacts from top companies refreshed everyday",
@@ -282,9 +279,25 @@ const Index = () => {
                 <span className="text-xs md:text-sm text-gray-700 dark:text-gray-300 truncate max-w-32 md:max-w-none">
                   Welcome, {user.email?.split('@')[0]}
                 </span>
-                <Button onClick={handleSignOut} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50 text-xs md:text-sm px-2 md:px-3">
-                  Sign Out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50 text-xs md:text-sm px-2 md:px-3">
+                      <UserCircle className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                      Account
+                      <ChevronDown className="h-3 w-3 md:h-4 md:w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTool('billing')}>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing & Plans
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <Button onClick={() => setShowAuthDialog(true)} variant="outline" size="sm" className="bg-white/50 dark:bg-gray-800/50 text-xs md:text-sm px-2 md:px-3">
@@ -431,7 +444,7 @@ const Index = () => {
         <Testimonials />
         
         {/* Footer */}
-        <Footer />
+        <Footer onToolClick={handleToolClick} />
 
         {/* Authentication Dialog */}
         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>

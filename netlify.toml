@@ -5,6 +5,14 @@
 [functions]
   directory = "netlify/functions"
 
+# Redirect payment callback POST requests to Netlify function
+[[redirects]]
+  from = "/payment-callback"
+  to = "/.netlify/functions/payment-callback"
+  status = 200
+  conditions = {Method = ["POST"]}
+
+# Catch-all redirect for SPA routing (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -12,3 +20,23 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # PhonePe Credentials (backup)
+  PHONEPE_CLIENT_ID = "SU2508041156201075329584"
+  PHONEPE_CLIENT_SECRET = "eadee2a1-44c3-4a6e-ab86-d899734eb44b"
+  PHONEPE_CLIENT_VERSION = "1"
+  PHONEPE_MERCHANT_ID = "ADAPTIUSONLINE"
+  PHONEPE_LIVE_URL = "https://api.phonepe.com/apis/hermes"
+  # PayU Live Credentials
+  PAYU_KEY = "otzziS"
+  PAYU_SALT = "jRexJMbL4CWbXV2CHI3ucrnInvozQwpt"
+  PAYU_MODE = "live"
+  PAYU_BASE_URL = "https://secure.payu.in/_payment"
+  NEXT_PUBLIC_BASE_URL = "http://localhost:3000"
+  CRON_SECRET = "qCFbG6B6kK9OEnj5Z5UrKqwdSd7Gpfny5KwVTDWgKFI="
+
+[dev]
+  command = "npm run dev"
+  targetPort = 8080
+  publish = "dist"
+  framework = "#custom"
+  functionsPort = 8887

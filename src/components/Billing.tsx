@@ -20,6 +20,7 @@ import { UserSubscription, SubscriptionPlan, PlanFeatures } from '@/types/subscr
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+
 const Billing = () => {
   const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,25 +63,105 @@ const Billing = () => {
         return;
       }
 
-      // In a real application, you would integrate with a payment gateway here
-      // For demo purposes, we'll simulate a successful payment
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get plan details
+      const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+      if (!plan) {
+        throw new Error('Invalid plan selected');
+      }
 
-      await SubscriptionService.upgradePlan(user.id, planId as any);
-      await loadSubscription();
+      if (plan.price === 0) {
+        toast({
+          title: "Free Plan",
+          description: "You're already on the free plan.",
+          variant: "default"
+        });
+        setProcessingPayment(null);
+        return;
+      }
 
-      toast({
-        title: "Success!",
-        description: `You've been upgraded to the ${planId} plan`,
+      const planDetails = SubscriptionService.getPlanDetails(planId as any);
+      if (!planDetails) {
+        throw new Error('Plan not found');
+      }
+
+      // Store transaction details for callback verification
+      const transactionData = {
+        planId,
+        amount: planDetails.price,
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+      };
+
+      // Initiate PayU payment
+      const response = await fetch('/.netlify/functions/payu-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transactionData),
       });
+
+      // Enhanced error handling for JSON parsing
+      if (!response.ok) {
+        console.error('PayU payment response not OK:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`Payment initiation failed: ${response.status} ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('PayU payment response:', responseText);
+      
+      if (!responseText.trim()) {
+        console.error('Empty response from PayU payment function');
+        throw new Error('Empty response from payment service');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text that failed to parse:', responseText);
+        throw new Error('Invalid response format from payment service');
+      }
+
+      if (result.success && result.data?.formData) {
+        // Store transaction details in localStorage for callback verification
+        localStorage.setItem('pendingTransaction', JSON.stringify({
+          transactionId: result.data.transactionId,
+          planId,
+          amount: planDetails.price,
+          timestamp: Date.now()
+        }));
+
+        // Create and submit PayU form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = result.data.formData.key ? 'https://secure.payu.in/_payment' : result.data.paymentUrl;
+        
+        // Add all PayU form fields
+        Object.entries(result.data.formData).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value as string;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+      } else {
+        throw new Error(result.message || 'Payment initiation failed');
+      }
     } catch (error) {
       console.error('Error upgrading plan:', error);
       toast({
-        title: "Error",
-        description: "Failed to process upgrade. Please try again.",
+        title: "Payment Error",
+        description: error instanceof Error ? error.message : "Failed to process upgrade. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setProcessingPayment(null);
     }
   };
